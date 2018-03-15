@@ -22,8 +22,9 @@ func random(min:CGFloat, max:CGFloat) -> CGFloat
 struct PhysicsCategory {
     static let None : UInt32 = 0
     static let All : UInt32 = UInt32.max
-    static let Asteroid : UInt32 = 0b1 //1
-    static let Shield : UInt32 = 0b10 //2
+    static let Spike : UInt32 = 0b1 //1
+    static let Thor : UInt32 = 0b10 //2
+    static let Hammer : UInt32 = 0b100 //4
 }
 
 
@@ -31,8 +32,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     var lastUpdateTime:TimeInterval!
     
-    var ship:SKSpriteNode!
-    var shield:SKSpriteNode!
+    var thor:SKSpriteNode!
     
     var updateDeltaX:Float!
     var updateDeltaY:Float!
@@ -43,78 +43,66 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.updateDeltaX = 0;
         self.updateDeltaY = 0;
 
+        self.addThor()
         
-        self.addShip()
-        self.addShield()
-        
-
+        //TODO: add Hela (even if she's just static! tho more fun to shoot hammers at her)
         
         run(SKAction.repeatForever(SKAction.sequence(
             [
-                SKAction.run(addAsteroid),
+                SKAction.run(addSpike),
                 SKAction.wait(forDuration: 1.0)
             ])))
         
         addPhysics()
     }
     
-    func addShip() {
-        ship = SKSpriteNode(imageNamed: "enterprise")
-        ship.xScale = 0.5
-        ship.yScale = 0.5
-        ship.position = CGPoint(x: size.width*0.22, y: size.height*0.5)
+    func addThor() {
+        thor = SKSpriteNode(imageNamed: "thor")
+        thor.xScale = 0.35
+        thor.yScale = 0.35
+        thor.position = CGPoint(x: size.width*0.2, y: size.height*0.5)
         
-        self.addChild(ship)
+        self.addChild(thor)
     }
     
-    func addShield() {
-        shield = SKSpriteNode(imageNamed: "shield")
-        shield.xScale = 0.5
-        shield.yScale = 0.5
-        shield.position = CGPoint(x: size.width*0.30, y: size.height*0.5)
+    func addSpike() {
+        let spike = SKSpriteNode(imageNamed: "spike")
+        spike.xScale = 0.1
+        spike.yScale = 0.1
         
-        configureShieldPhysics()
+        let actualY = random(min:spike.size.height/2, max:size.height - spike.size.height/2)
         
-        self.addChild(shield)
-    }
-    
-    func addAsteroid() {
-        let asteroid = SKSpriteNode(imageNamed: "asteroid")
-        asteroid.xScale = 0.5
-        asteroid.yScale = 0.5
+        spike.position = CGPoint(x: size.width + spike.size.width/2, y: actualY)
         
-        let actualY = random(min:asteroid.size.height/2, max:size.height - asteroid.size.height/2)
+        addChild(spike)
         
-        asteroid.position = CGPoint(x: size.width + asteroid.size.width/2, y: actualY)
+        configureSpikePhysics(spike: spike)
         
-        addChild(asteroid)
+        let actualDuration = random(min:CGFloat(3.0), max: CGFloat(5.0))
         
-        configureAsteroidPhysics(asteroid: asteroid)
-        
-        let actualDuration = random(min:CGFloat(2.0), max: CGFloat(4.0))
-        
-        let actionMove = SKAction.move(to: CGPoint(x:-asteroid.size.width/2, y:actualY), duration: TimeInterval(actualDuration))
+        let actionMove = SKAction.move(to: CGPoint(x:-spike.size.width/2, y:actualY), duration: TimeInterval(actualDuration))
         let actionMoveDone = SKAction.removeFromParent()
-        asteroid.run(SKAction.sequence([actionMove, actionMoveDone]))
+        spike.run(SKAction.sequence([actionMove, actionMoveDone]))
         
     }
     
-    func configureShieldPhysics() {
-        shield.physicsBody = SKPhysicsBody(circleOfRadius: shield.size.width/2)
-        shield.physicsBody?.isDynamic = false
-        shield.physicsBody?.categoryBitMask = PhysicsCategory.Shield
-        shield.physicsBody?.contactTestBitMask = PhysicsCategory.Asteroid
-        shield.physicsBody?.collisionBitMask = PhysicsCategory.None
-        shield.physicsBody?.usesPreciseCollisionDetection = false
+    func configureThorPhysics() {
+        thor.physicsBody = SKPhysicsBody(circleOfRadius: thor.size.width/2)
+        thor.physicsBody?.isDynamic = false
+        thor.physicsBody?.categoryBitMask = PhysicsCategory.Thor
+        thor.physicsBody?.contactTestBitMask = PhysicsCategory.Spike
+        thor.physicsBody?.collisionBitMask = PhysicsCategory.None
+        thor.physicsBody?.usesPreciseCollisionDetection = false
     }
     
-    func configureAsteroidPhysics(asteroid:SKSpriteNode) {
-        asteroid.physicsBody = SKPhysicsBody(rectangleOf: asteroid.size)
-        asteroid.physicsBody?.isDynamic = true
-        asteroid.physicsBody?.categoryBitMask = PhysicsCategory.Asteroid
-        asteroid.physicsBody?.contactTestBitMask = PhysicsCategory.Shield
-        asteroid.physicsBody?.collisionBitMask = PhysicsCategory.None
-        asteroid.physicsBody?.usesPreciseCollisionDetection = false
+    func configureSpikePhysics(spike:SKSpriteNode) {
+        spike.physicsBody = SKPhysicsBody(rectangleOf: spike.size)
+        spike.physicsBody?.isDynamic = true
+        spike.physicsBody?.categoryBitMask = PhysicsCategory.Spike
+        spike.physicsBody?.contactTestBitMask = PhysicsCategory.Thor
+        //TODO: add contact bit mask item for collisions with hammer?!
+        spike.physicsBody?.collisionBitMask = PhysicsCategory.None
+        spike.physicsBody?.usesPreciseCollisionDetection = false
     }
     
     func addPhysics() {

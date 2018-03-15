@@ -15,6 +15,7 @@
 		A12F8BFB20561F7700C3349D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A12F8BF920561F7700C3349D /* Main.storyboard */; };
 		A12F8BFD20561F7700C3349D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A12F8BFC20561F7700C3349D /* Assets.xcassets */; };
 		A12F8C0020561F7700C3349D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A12F8BFE20561F7700C3349D /* LaunchScreen.storyboard */; };
+		A12F8C082058E2F600C3349D /* SkyTileSet.sks in Resources */ = {isa = PBXBuildFile; fileRef = A12F8C072058E2F600C3349D /* SkyTileSet.sks */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		A12F8BFC20561F7700C3349D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A12F8BFF20561F7700C3349D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A12F8C0120561F7700C3349D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A12F8C072058E2F600C3349D /* SkyTileSet.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = SkyTileSet.sks; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +71,7 @@
 				A12F8BFC20561F7700C3349D /* Assets.xcassets */,
 				A12F8BFE20561F7700C3349D /* LaunchScreen.storyboard */,
 				A12F8C0120561F7700C3349D /* Info.plist */,
+				A12F8C072058E2F600C3349D /* SkyTileSet.sks */,
 			);
 			path = tarney_homwork3;
 			sourceTree = "<group>";
@@ -132,6 +135,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A12F8C082058E2F600C3349D /* SkyTileSet.sks in Resources */,
 				A12F8BFB20561F7700C3349D /* Main.storyboard in Resources */,
 				A12F8BF220561F7700C3349D /* GameScene.sks in Resources */,
 				A12F8BFD20561F7700C3349D /* Assets.xcassets in Resources */,
