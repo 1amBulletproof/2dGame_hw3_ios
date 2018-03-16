@@ -25,6 +25,12 @@ struct PhysicsCategory {
     static let Spike : UInt32 = 0b1 //1
     static let Thor : UInt32 = 0b10 //2
     static let Hammer : UInt32 = 0b100 //4
+    static let Hela : UInt32 = 0b1000 //8
+}
+
+enum TouchType {
+    case TAP
+    case SWIPE
 }
 
 
@@ -33,42 +39,69 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var lastUpdateTime:TimeInterval!
     
     var thor:SKSpriteNode!
+    var thorPosition:CGPoint!
+    var numberOfTimesThorHit:Int!
     
-    var updateDeltaX:Float!
-    var updateDeltaY:Float!
-    var lastPosition:CGPoint?
+    var hela:SKSpriteNode!
+    var numberOfTimesHelaHit:Int!
+    
+    var touchType:TouchType!
     
     override func sceneDidLoad() {
         
-        self.updateDeltaX = 0;
-        self.updateDeltaY = 0;
-
+        //Reset scores to 0
+        self.numberOfTimesThorHit = 0
+        self.numberOfTimesHelaHit = 0
+        
+        self.touchType = TouchType.TAP //default value
+    
         self.addThor()
         
-        //TODO: add Hela (even if she's just static! tho more fun to shoot hammers at her)
+        //TODO: make hela move up and down?
+        self.addHela()
         
         run(SKAction.repeatForever(SKAction.sequence(
             [
                 SKAction.run(addSpike),
-                SKAction.wait(forDuration: 1.0)
+                SKAction.wait(forDuration: 2.0)
             ])))
         
-        addPhysics()
+        self.addPhysics()
+    }
+    
+    func addPhysics() {
+        physicsWorld.gravity = CGVector(dx: 0, dy: 0) //No gravity! Makes game too hard
+        physicsWorld.contactDelegate = self
     }
     
     func addThor() {
-        thor = SKSpriteNode(imageNamed: "thor")
-        thor.xScale = 0.35
-        thor.yScale = 0.35
-        thor.position = CGPoint(x: size.width*0.2, y: size.height*0.5)
+        self.thor = SKSpriteNode(imageNamed: "thor")
+        self.thor.xScale = 0.25
+        self.thor.yScale = 0.25
+        self.thorPosition = CGPoint(x: size.width * 0.2, y: size.height * 0.5)
+        self.thor.position = self.thorPosition
+        
+        self.configureThorPhysics()
         
         self.addChild(thor)
     }
     
+    func addHela() {
+        hela = SKSpriteNode(imageNamed: "hela")
+        hela.xScale = 0.2
+        hela.yScale = 0.2
+        hela.position = CGPoint(x: size.width*0.9, y: size.height*0.5)
+        
+        self.configureHelaPhysics()
+        
+        self.addChild(hela)
+    }
+    
+    
     func addSpike() {
         let spike = SKSpriteNode(imageNamed: "spike")
-        spike.xScale = 0.1
-        spike.yScale = 0.1
+        spike.xScale = 0.07
+        spike.yScale = 0.07
         
         let actualY = random(min:spike.size.height/2, max:size.height - spike.size.height/2)
         
@@ -87,15 +120,35 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func configureThorPhysics() {
-        thor.physicsBody = SKPhysicsBody(circleOfRadius: thor.size.width/2)
-        thor.physicsBody?.isDynamic = false
-        thor.physicsBody?.categoryBitMask = PhysicsCategory.Thor
-        thor.physicsBody?.contactTestBitMask = PhysicsCategory.Spike
-        thor.physicsBody?.collisionBitMask = PhysicsCategory.None
-        thor.physicsBody?.usesPreciseCollisionDetection = false
+        self.thor.physicsBody = SKPhysicsBody(rectangleOf: self.thor.size)
+        self.thor.physicsBody?.isDynamic = false
+        self.thor.physicsBody?.categoryBitMask = PhysicsCategory.Thor
+        self.thor.physicsBody?.contactTestBitMask = PhysicsCategory.Spike
+        self.thor.physicsBody?.collisionBitMask = PhysicsCategory.None
+        self.thor.physicsBody?.usesPreciseCollisionDetection = false
     }
     
-    func configureSpikePhysics(spike:SKSpriteNode) {
+    func configureHelaPhysics() {
+        self.hela.physicsBody = SKPhysicsBody(rectangleOf: self.hela.size)
+        self.hela.physicsBody?.isDynamic = false
+        self.hela.physicsBody?.categoryBitMask = PhysicsCategory.Hela
+        self.hela.physicsBody?.contactTestBitMask = PhysicsCategory.Hammer
+        self.hela.physicsBody?.collisionBitMask = PhysicsCategory.None
+        self.hela.physicsBody?.usesPreciseCollisionDetection = false
+    }
+    
+    func configureHammerPhysics(hammer: SKSpriteNode) {
+        hammer.physicsBody = SKPhysicsBody(rectangleOf: hammer.size)
+        hammer.physicsBody?.isDynamic = true
+        hammer.physicsBody?.categoryBitMask = PhysicsCategory.Hammer
+        hammer.physicsBody?.contactTestBitMask = PhysicsCategory.Hela
+        //TODO: add contact bit mask item for collisions with spike?!
+        hammer.physicsBody?.collisionBitMask = PhysicsCategory.None
+        hammer.physicsBody?.usesPreciseCollisionDetection = false
+        
+    }
+    
+    func configureSpikePhysics(spike: SKSpriteNode) {
         spike.physicsBody = SKPhysicsBody(rectangleOf: spike.size)
         spike.physicsBody?.isDynamic = true
         spike.physicsBody?.categoryBitMask = PhysicsCategory.Spike
@@ -105,13 +158,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spike.physicsBody?.usesPreciseCollisionDetection = false
     }
     
-    func addPhysics() {
-        physicsWorld.gravity = CGVector(dx: 0, dy: 0)
-        physicsWorld.contactDelegate = self
-    }
-    
+
     func didBegin(_ contact: SKPhysicsContact) {
         var firstBody:SKPhysicsBody
+        print("MADE CONTACT")
         
         if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask
         {
@@ -126,26 +176,45 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         (firstBody.node as! SKSpriteNode).removeFromParent()
     }
     
+    func throwHammer() {
+        //TODO: add a hammer at thors head or arm (based on his position) headed to the right
+        print("Throw hammer...'DONG'")
+    }
+    
+    func moveThor(toNewYPosition: CGFloat) {
+        let newThorPosition = CGPoint(x: self.thorPosition.x, y: toNewYPosition)
+        self.thorPosition = newThorPosition
+        self.thor.position = self.thorPosition //this is faster/more-instant than an actual move!
+        //let moveThorUpOrDown = SKAction.move(to: newThorPosition, duration: 0.0001)
+        //self.thor.run(moveThorUpOrDown)
+    }
+    
     func touchDown(atPoint pos : CGPoint) {
-        print("touch DOWN at \(pos)")
+        self.touchType = TouchType.TAP
     }
     
     func touchMoved(toPoint pos : CGPoint) {
-        print("touch MOVED at \(pos)")
-        //if lastPosition == nil { lastPosition = pos } else {
-        //updateDeltaX += lastLocation - pos
-        //updateDeltaX += lastLocation - pos
-        //}
-        
+        self.touchType = TouchType.SWIPE
+        self.moveThor(toNewYPosition: pos.y)
     }
     
     func touchUp(atPoint pos : CGPoint) {
-        print("touch UP at \(pos)")
-        self.lastPosition = nil
-        //if updateDeltaX > XXX { processSwipeRight() }
-        //else if updateDeltaY > XXX { processSwipeUp() }
-        
+        if self.touchType == TouchType.TAP {
+            self.throwHammer()
+        }
     }
+    
+    override func update(_ currentTime: TimeInterval) {
+        // Called before each frame is rendered
+        
+        // Initialize _lastUpdateTime if it has not already been
+        if (self.lastUpdateTime == 0) {
+            self.lastUpdateTime = currentTime
+        }
+        
+        self.lastUpdateTime = currentTime
+    }
+    
     
     func processSwipRight() {
         //TODO: fire ze missile!
@@ -171,17 +240,5 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchUp(atPoint: t.location(in: self)) }
-    }
-    
-    
-    override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
-        
-        // Initialize _lastUpdateTime if it has not already been
-        if (self.lastUpdateTime == 0) {
-            self.lastUpdateTime = currentTime
-        }
-        
-        self.lastUpdateTime = currentTime
     }
 }
