@@ -116,7 +116,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let actionMove = SKAction.move(to: CGPoint(x:-spike.size.width/2, y:actualY), duration: TimeInterval(actualDuration))
         let actionMoveDone = SKAction.removeFromParent()
         spike.run(SKAction.sequence([actionMove, actionMoveDone]))
+    }
+    
+    
+    func throwHammer() {
+        let hammer = SKSpriteNode(imageNamed: "hammer")
+        hammer.xScale = 0.25
+        hammer.yScale = 0.25
         
+        //TODO: offset hammer X position
+        hammer.position = CGPoint(x: self.thorPosition.x + 75, y: self.thorPosition.y + 25)
+        
+        addChild(hammer)
+        
+        configureHammerPhysics(hammer: hammer)
+        
+        let actualDuration = CGFloat(3.0)
+        
+        let actionMove = SKAction.move(to: CGPoint(x: size.width, y: self.thorPosition.y), duration: TimeInterval(actualDuration))
+        let actionMoveDone = SKAction.removeFromParent()
+        hammer.run(SKAction.sequence([actionMove, actionMoveDone]))
     }
     
     func configureThorPhysics() {
@@ -141,7 +160,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         hammer.physicsBody = SKPhysicsBody(rectangleOf: hammer.size)
         hammer.physicsBody?.isDynamic = true
         hammer.physicsBody?.categoryBitMask = PhysicsCategory.Hammer
-        hammer.physicsBody?.contactTestBitMask = PhysicsCategory.Hela
+        hammer.physicsBody?.contactTestBitMask = PhysicsCategory.Hela + PhysicsCategory.Spike
         //TODO: add contact bit mask item for collisions with spike?!
         hammer.physicsBody?.collisionBitMask = PhysicsCategory.None
         hammer.physicsBody?.usesPreciseCollisionDetection = false
@@ -161,32 +180,43 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func didBegin(_ contact: SKPhysicsContact) {
         var firstBody:SKPhysicsBody
+        var secondBody:SKPhysicsBody
         print("MADE CONTACT")
+
         
         if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask
         {
             firstBody = contact.bodyA
+            secondBody = contact.bodyB
         }
         else
         {
             firstBody = contact.bodyB
+            secondBody = contact.bodyA
         }
         
         guard firstBody.node != nil else { return }
         (firstBody.node as! SKSpriteNode).removeFromParent()
+        //TODO: Logic for hammer & spikes scores:
+        //-Thor hit, -1 life (or game over?!)
+        //-Hela hit, +1 (win @ XXX)
+        if secondBody.categoryBitMask == PhysicsCategory.Thor
+        {
+            print("OUCH! Thor was hit")
+        } else if (secondBody.categoryBitMask == PhysicsCategory.Hela)
+        {
+            print("DONG! You hit Hela")
+        }
+
     }
-    
-    func throwHammer() {
-        //TODO: add a hammer at thors head or arm (based on his position) headed to the right
-        print("Throw hammer...'DONG'")
-    }
+
     
     func moveThor(toNewYPosition: CGFloat) {
         let newThorPosition = CGPoint(x: self.thorPosition.x, y: toNewYPosition)
         self.thorPosition = newThorPosition
         self.thor.position = self.thorPosition //this is faster/more-instant than an actual move!
-        //let moveThorUpOrDown = SKAction.move(to: newThorPosition, duration: 0.0001)
-        //self.thor.run(moveThorUpOrDown)
+//        let moveThorUpOrDown = SKAction.move(to: newThorPosition, duration: 0.0001)
+//        self.thor.run(moveThorUpOrDown)
     }
     
     func touchDown(atPoint pos : CGPoint) {
