@@ -11,6 +11,10 @@ import SpriteKit
 import GameplayKit
 
 class GameViewController: UIViewController {
+    
+    var finalScore:Int!
+    var finalGameStatus:String!
+    var sceneNode:GameScene?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -18,9 +22,12 @@ class GameViewController: UIViewController {
         // Load 'GameScene.sks' as a GKScene. This provides gameplay related content
         // including entities and graphs.
         if let scene = GKScene(fileNamed: "GameScene") {
-            
+        
             // Get the SKScene from the loaded GKScene
             if let sceneNode = scene.rootNode as! GameScene? {
+                self.sceneNode = sceneNode
+                
+                sceneNode.gameViewController = self
                 
                 // Copy gameplay related content over to the scene
 //                sceneNode.entities = scene.entities
@@ -41,6 +48,13 @@ class GameViewController: UIViewController {
             }
         }
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if let sceneNode = self.sceneNode {
+            sceneNode.score = 0
+            sceneNode.numberOfSpikesPassed = 0
+        }
+    }
 
     override var shouldAutorotate: Bool {
         return true
@@ -51,6 +65,14 @@ class GameViewController: UIViewController {
             return .allButUpsideDown
         } else {
             return .all
+        }
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "segToEnd" {
+            let gameEndView = segue.destination as! GameEndViewController
+            gameEndView.gameStatus = self.finalGameStatus
+            gameEndView.finalScore = self.finalScore
         }
     }
 

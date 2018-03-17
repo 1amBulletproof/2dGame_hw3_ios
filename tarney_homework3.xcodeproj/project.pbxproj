@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A102FCF9205D977900A1147E /* GameEndViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102FCF8205D977900A1147E /* GameEndViewController.swift */; };
 		A12F8BF020561F7700C3349D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12F8BEF20561F7700C3349D /* AppDelegate.swift */; };
 		A12F8BF220561F7700C3349D /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = A12F8BF120561F7700C3349D /* GameScene.sks */; };
 		A12F8BF420561F7700C3349D /* Actions.sks in Resources */ = {isa = PBXBuildFile; fileRef = A12F8BF320561F7700C3349D /* Actions.sks */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A102FCF8205D977900A1147E /* GameEndViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEndViewController.swift; sourceTree = "<group>"; };
 		A12F8BEC20561F7700C3349D /* tarney_homework3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tarney_homework3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A12F8BEF20561F7700C3349D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A12F8BF120561F7700C3349D /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 				A12F8BFE20561F7700C3349D /* LaunchScreen.storyboard */,
 				A12F8C0120561F7700C3349D /* Info.plist */,
 				A12F8C072058E2F600C3349D /* SkyTileSet.sks */,
+				A102FCF8205D977900A1147E /* GameEndViewController.swift */,
 			);
 			path = tarney_homwork3;
 			sourceTree = "<group>";
@@ -153,6 +156,7 @@
 			files = (
 				A12F8BF620561F7700C3349D /* GameScene.swift in Sources */,
 				A12F8BF820561F7700C3349D /* GameViewController.swift in Sources */,
+				A102FCF9205D977900A1147E /* GameEndViewController.swift in Sources */,
 				A12F8BF020561F7700C3349D /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

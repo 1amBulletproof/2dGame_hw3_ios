@@ -33,25 +33,46 @@ enum TouchType {
     case SWIPE
 }
 
-
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
-    var lastUpdateTime:TimeInterval!
+    //MARK: CLASS PROPERTIES
+    var gameViewController:GameViewController!
+    let gameEndString = "GAME OVER: YOU "
+    var gameEndResult:String?
+    
+    let winSpikeThreshold = 10
     
     var thor:SKSpriteNode!
     var thorPosition:CGPoint!
     var numberOfTimesThorHit:Int!
     
     var hela:SKSpriteNode!
-    var numberOfTimesHelaHit:Int!
     
     var touchType:TouchType!
+    
+    var scoreLabel:SKLabelNode!
+    var scoreStaticLabel:SKLabelNode!
+    
+    var numberOfSpikesPassed:Int!
+    
+    var numberOfHits:Int!
+    var score:Int! {
+        get {
+            return self.numberOfHits! * 10
+        }
+        set(newScore) {
+            self.numberOfHits = newScore/10
+            self.scoreLabel.text = String(newScore)
+        }
+    }
     
     override func sceneDidLoad() {
         
         //Reset scores to 0
-        self.numberOfTimesThorHit = 0
-        self.numberOfTimesHelaHit = 0
+        self.addStaticScoreLabel()
+        self.addScoreLabel()
+        self.score = 0;
+        self.numberOfSpikesPassed = 0;
         
         self.touchType = TouchType.TAP //default value
     
@@ -69,9 +90,29 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addPhysics()
     }
     
+    
     func addPhysics() {
         physicsWorld.gravity = CGVector(dx: 0, dy: 0) //No gravity! Makes game too hard
         physicsWorld.contactDelegate = self
+    }
+    
+    // MARK: ADD SPRITES
+    func addStaticScoreLabel() {
+        self.scoreStaticLabel = SKLabelNode()
+        self.scoreStaticLabel.position = CGPoint(x: size.width - 150, y: size.height - 50)
+        self.scoreStaticLabel.text = "SCORE:"
+        self.scoreStaticLabel.fontColor = UIColor.green
+    
+        self.addChild(self.scoreStaticLabel)
+    }
+    
+    func addScoreLabel() {
+        self.scoreLabel = SKLabelNode()
+        self.scoreLabel.position = CGPoint(x: size.width - 50, y: size.height - 50)
+        self.scoreLabel.text = "0"
+        self.scoreLabel.fontColor = UIColor.green
+        
+        self.addChild(self.scoreLabel)
     }
     
     func addThor() {
@@ -87,19 +128,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func addHela() {
-        hela = SKSpriteNode(imageNamed: "hela")
-        hela.xScale = 0.2
-        hela.yScale = 0.2
-        hela.position = CGPoint(x: size.width*0.9, y: size.height*0.5)
+        self.hela = SKSpriteNode(imageNamed: "hela")
+        self.hela.xScale = 0.2
+        self.hela.yScale = 0.2
+        self.hela.position = CGPoint(x: size.width*0.9, y: size.height*0.25)
         
         self.configureHelaPhysics()
         
         self.addChild(hela)
+        
+        let moveUp = SKAction.moveBy(x: 0, y: 200, duration: 2)
+        let upAndDownSequence = SKAction.sequence([moveUp, moveUp.reversed()])
+        self.hela.run(SKAction.repeatForever(upAndDownSequence))
+
     }
-    
     
     func addSpike() {
         let spike = SKSpriteNode(imageNamed: "spike")
+        spike.name = "spike"
         spike.xScale = 0.07
         spike.yScale = 0.07
         
@@ -108,6 +154,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spike.position = CGPoint(x: size.width + spike.size.width/2, y: actualY)
         
         addChild(spike)
+        self.numberOfSpikesPassed = self.numberOfSpikesPassed + 1
         
         configureSpikePhysics(spike: spike)
         
@@ -118,9 +165,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spike.run(SKAction.sequence([actionMove, actionMoveDone]))
     }
     
-    
     func throwHammer() {
         let hammer = SKSpriteNode(imageNamed: "hammer")
+        hammer.name = "hammer"
         hammer.xScale = 0.25
         hammer.yScale = 0.25
         
@@ -133,11 +180,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         let actualDuration = CGFloat(3.0)
         
-        let actionMove = SKAction.move(to: CGPoint(x: size.width, y: self.thorPosition.y), duration: TimeInterval(actualDuration))
+        let actionMove = SKAction.move(to: CGPoint(x: size.width, y: self.thorPosition.y + 25), duration: TimeInterval(actualDuration))
         let actionMoveDone = SKAction.removeFromParent()
         hammer.run(SKAction.sequence([actionMove, actionMoveDone]))
     }
     
+    //MARK: CONFIGURE PHYSICS
     func configureThorPhysics() {
         self.thor.physicsBody = SKPhysicsBody(rectangleOf: self.thor.size)
         self.thor.physicsBody?.isDynamic = false
@@ -177,13 +225,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spike.physicsBody?.usesPreciseCollisionDetection = false
     }
     
-
+    //MARK: HANDLE CONTACT EVENTS
     func didBegin(_ contact: SKPhysicsContact) {
         var firstBody:SKPhysicsBody
         var secondBody:SKPhysicsBody
-        print("MADE CONTACT")
 
-        
         if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask
         {
             firstBody = contact.bodyA
@@ -195,30 +241,34 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             secondBody = contact.bodyA
         }
         
+        if secondBody.categoryBitMask == PhysicsCategory.Thor {
+                    //TODO: transition to lose screen
+            self.gameEndResult = "LOSE"
+            self.gameOver()
+        } else if (secondBody.categoryBitMask == PhysicsCategory.Hela) {
+            self.score = self.score + 10
+        } else if (firstBody.categoryBitMask == PhysicsCategory.Spike &&
+                secondBody.categoryBitMask == PhysicsCategory.Hammer) {
+            self.score = self.score + 10
+            if  secondBody.node != nil {
+                (secondBody.node as! SKSpriteNode).removeFromParent()
+            }
+        }
+
         guard firstBody.node != nil else { return }
         (firstBody.node as! SKSpriteNode).removeFromParent()
-        //TODO: Logic for hammer & spikes scores:
-        //-Thor hit, -1 life (or game over?!)
-        //-Hela hit, +1 (win @ XXX)
-        if secondBody.categoryBitMask == PhysicsCategory.Thor
-        {
-            print("OUCH! Thor was hit")
-        } else if (secondBody.categoryBitMask == PhysicsCategory.Hela)
-        {
-            print("DONG! You hit Hela")
-        }
 
     }
 
-    
     func moveThor(toNewYPosition: CGFloat) {
         let newThorPosition = CGPoint(x: self.thorPosition.x, y: toNewYPosition)
         self.thorPosition = newThorPosition
         self.thor.position = self.thorPosition //this is faster/more-instant than an actual move!
-//        let moveThorUpOrDown = SKAction.move(to: newThorPosition, duration: 0.0001)
-//        self.thor.run(moveThorUpOrDown)
+        //let moveThorUpOrDown = SKAction.move(to: newThorPosition, duration: 0.0001)
+        //self.thor.run(moveThorUpOrDown)
     }
     
+    //MARK: HANDLE TOUCH EVENTS
     func touchDown(atPoint pos : CGPoint) {
         self.touchType = TouchType.TAP
     }
@@ -234,40 +284,37 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
-        
-        // Initialize _lastUpdateTime if it has not already been
-        if (self.lastUpdateTime == 0) {
-            self.lastUpdateTime = currentTime
+    //MARK: GAME OVER
+    func gameOver() {
+        for node in self.children {
+            if (node.name == "hammer" || node.name == "spike") {
+                node.removeFromParent()
+            }
         }
-        
-        self.lastUpdateTime = currentTime
+        self.gameViewController.finalScore = self.score
+        self.gameViewController.finalGameStatus = self.gameEndResult
+        self.gameViewController.performSegue(withIdentifier: "segToEnd", sender: self.gameViewController)
     }
     
-    
-    func processSwipRight() {
-        //TODO: fire ze missile!
-        //probably basically the opposite of the asteroid/projectiles
+    override func update(_ currentTime: TimeInterval) {
+        if (self.numberOfSpikesPassed > self.winSpikeThreshold) {
+            self.gameEndResult = "WON"
+            self.gameOver()
+        }
     }
-    
-    func processSwipeUp() {
-        //TODO: move character up or jump
-        //probably an action (what brings him back to ground? Gravity?
-    }
-    
+
+    //MARK: UNUSED
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
         for t in touches { self.touchDown(atPoint: t.location(in: self)) }
     }
-    
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchMoved(toPoint: t.location(in: self)) }
     }
-    
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchUp(atPoint: t.location(in: self)) }
     }
-    
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchUp(atPoint: t.location(in: self)) }
     }
