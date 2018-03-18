@@ -41,6 +41,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var gameEndResult:String?
     
     let winSpikeThreshold = 10
+    var numberOfSpikesPassed:Int!
+    var numberOfHits:Int!
+    var score:Int! {
+        get {
+            return self.numberOfHits! * 10
+        }
+        set(newScore) {
+            self.numberOfHits = newScore/10
+            self.scoreLabel.text = String(newScore)
+        }
+    }
     
     var thor:SKSpriteNode!
     var thorPosition:CGPoint!
@@ -53,19 +64,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var scoreLabel:SKLabelNode!
     var scoreStaticLabel:SKLabelNode!
     
-    var numberOfSpikesPassed:Int!
-    
-    var numberOfHits:Int!
-    var score:Int! {
-        get {
-            return self.numberOfHits! * 10
-        }
-        set(newScore) {
-            self.numberOfHits = newScore/10
-            self.scoreLabel.text = String(newScore)
-        }
-    }
-    
     override func sceneDidLoad() {
         
         //Reset scores to 0
@@ -75,6 +73,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.numberOfSpikesPassed = 0;
         
         self.touchType = TouchType.TAP //default value
+        
+        self.addBackgroundImages()
     
         self.addThor()
         
@@ -90,6 +90,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addPhysics()
     }
     
+    func addBackgroundImages() {
+        let background1 = SKSpriteNode(imageNamed: "blue_sky_2")
+        let background2 = SKSpriteNode(imageNamed: "blue_sky_2")
+        
+        background1.position =
+            CGPoint(x: frame.size.width / 2, y: frame.size.height / 2)
+        background1.size = CGSize(width: frame.width, height: frame.height)
+        background1.zPosition = -1
+        self.addChild(background1)
+
+    }
     
     func addPhysics() {
         physicsWorld.gravity = CGVector(dx: 0, dy: 0) //No gravity! Makes game too hard
@@ -241,17 +252,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             secondBody = contact.bodyA
         }
         
-        if secondBody.categoryBitMask == PhysicsCategory.Thor {
-                    //TODO: transition to lose screen
-            self.gameEndResult = "LOSE"
-            self.gameOver()
-        } else if (secondBody.categoryBitMask == PhysicsCategory.Hela) {
-            self.score = self.score + 10
-        } else if (firstBody.categoryBitMask == PhysicsCategory.Spike &&
-                secondBody.categoryBitMask == PhysicsCategory.Hammer) {
-            self.score = self.score + 10
-            if  secondBody.node != nil {
-                (secondBody.node as! SKSpriteNode).removeFromParent()
+        if (self.numberOfSpikesPassed <= self.winSpikeThreshold) {
+            if secondBody.categoryBitMask == PhysicsCategory.Thor {
+                        //TODO: transition to lose screen
+                self.gameEndResult = "LOSE"
+                print("LOSE")
+                self.gameOver()
+            } else if (secondBody.categoryBitMask == PhysicsCategory.Hela) {
+                self.score = self.score + 10
+            } else if (firstBody.categoryBitMask == PhysicsCategory.Spike &&
+                    secondBody.categoryBitMask == PhysicsCategory.Hammer) {
+                self.score = self.score + 10
+                if  secondBody.node != nil {
+                    (secondBody.node as! SKSpriteNode).removeFromParent()
+                }
             }
         }
 
@@ -298,6 +312,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func update(_ currentTime: TimeInterval) {
         if (self.numberOfSpikesPassed > self.winSpikeThreshold) {
+            self.numberOfSpikesPassed = 0 //prevents this from firing multiple times
             self.gameEndResult = "WON"
             self.gameOver()
         }
