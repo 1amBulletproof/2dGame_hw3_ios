@@ -66,6 +66,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var scoreLabel:SKLabelNode!
     var scoreStaticLabel:SKLabelNode!
     
+    var touchDownPoint:CGPoint!
+    
     override func sceneDidLoad() {
         
         //Reset scores to 0
@@ -288,6 +290,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     //MARK: HANDLE TOUCH EVENTS
     func touchDown(atPoint pos : CGPoint) {
         self.touchType = TouchType.TAP
+        self.touchDownPoint = pos
     }
     
     func touchMoved(toPoint pos : CGPoint) {
@@ -298,6 +301,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func touchUp(atPoint pos : CGPoint) {
         if self.touchType == TouchType.TAP {
             self.throwHammer()
+        } else if ( abs(self.touchDownPoint.y - pos.y) < 10 ) {
+            self.throwHammer() //Tapping often actually triggers some movement
         }
     }
 
