@@ -53,6 +53,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    var background1:SKSpriteNode!
+    var background2:SKSpriteNode!
     var thor:SKSpriteNode!
     var thorPosition:CGPoint!
     var numberOfTimesThorHit:Int!
@@ -90,24 +92,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addPhysics()
     }
     
-    func addBackgroundImages() {
-        let background1 = SKSpriteNode(imageNamed: "blue_sky_2")
-        let background2 = SKSpriteNode(imageNamed: "blue_sky_2")
-        
-        background1.position =
-            CGPoint(x: frame.size.width / 2, y: frame.size.height / 2)
-        background1.size = CGSize(width: frame.width, height: frame.height)
-        background1.zPosition = -1
-        self.addChild(background1)
-
-    }
-    
     func addPhysics() {
         physicsWorld.gravity = CGVector(dx: 0, dy: 0) //No gravity! Makes game too hard
         physicsWorld.contactDelegate = self
     }
     
     // MARK: ADD SPRITES
+    func addBackgroundImages() {
+        self.background1 = SKSpriteNode(imageNamed: "blue_sky_2")
+        self.background1.position = CGPoint(x: self.frame.size.width/2, y: self.frame.size.height/2 )
+        self.background1.size = CGSize(width: self.frame.width + 20, height: self.frame.height)
+        self.background1.zPosition = -1
+        self.addChild(self.background1)
+        
+        self.background2 = SKSpriteNode(imageNamed: "blue_sky_2")
+        self.background2.size = CGSize(width: self.frame.width + 20, height: self.frame.height)
+        self.background2.position = CGPoint(x: (self.frame.width/2) + background1.size.width, y: self.frame.height/2)
+        self.background2.zPosition = -1
+        self.addChild(self.background2)
+    }
+    
     func addStaticScoreLabel() {
         self.scoreStaticLabel = SKLabelNode()
         self.scoreStaticLabel.position = CGPoint(x: size.width - 150, y: size.height - 50)
@@ -256,7 +260,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if secondBody.categoryBitMask == PhysicsCategory.Thor {
                         //TODO: transition to lose screen
                 self.gameEndResult = "LOSE"
-                print("LOSE")
                 self.gameOver()
             } else if (secondBody.categoryBitMask == PhysicsCategory.Hela) {
                 self.score = self.score + 10
@@ -297,6 +300,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.throwHammer()
         }
     }
+
+    //MARK: PERIODIC UPDATES
+    override func update(_ currentTime: TimeInterval) {
+        if (self.numberOfSpikesPassed > self.winSpikeThreshold) {
+            self.numberOfSpikesPassed = 0 //prevents this from firing multiple times
+            self.gameEndResult = "WON"
+            self.gameOver()
+        }
+        self.scrollBackground()
+    }
+    
+    func scrollBackground() {
+        //Move the set of images to the left
+        self.background1.position = CGPoint(x: self.background1.position.x - 5, y: self.background1.position.y)
+        self.background2.position = CGPoint(x: self.background2.position.x - 5, y: self.background2.position.y)
+        
+        //If/when an image gets too far to the left,  reseting the moving images:
+        if (self.background1.position.x <= -self.frame.size.width/2) {
+            self.background1.position = CGPoint(x: self.frame.size.width/2, y: self.frame.size.height/2)
+            self.background2.position = CGPoint(x: (self.frame.width/2) + background1.size.width, y: self.frame.size.height/2)
+        }
+    }
     
     //MARK: GAME OVER
     func gameOver() {
@@ -306,17 +331,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
         self.gameViewController.finalScore = self.score
-        self.gameViewController.finalGameStatus = self.gameEndResult
+        self.gameViewController.finalGameStatus = self.gameEndString + self.gameEndResult!
         self.gameViewController.performSegue(withIdentifier: "segToEnd", sender: self.gameViewController)
     }
     
-    override func update(_ currentTime: TimeInterval) {
-        if (self.numberOfSpikesPassed > self.winSpikeThreshold) {
-            self.numberOfSpikesPassed = 0 //prevents this from firing multiple times
-            self.gameEndResult = "WON"
-            self.gameOver()
-        }
-    }
+
 
     //MARK: UNUSED
 
