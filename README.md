@@ -1,5 +1,5 @@
 # Slider 2d Game Assignment 3
-- Author: Brandon Tarney
+- Author: Brandon
 - Date: 03/17/2018
 
 ## Gameplay Directions:
